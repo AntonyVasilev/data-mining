@@ -57,8 +57,7 @@ class Parse5ka:
         for category in categories:
             category_dict = category
             for products in self.parse(self.start_url, category["parent_group_code"]):
-                for product in products:
-                    prods_list.append(product)
+                prods_list = [product for product in products]
                 time.sleep(0.1)
             category_dict['products'] = prods_list
             self._save_to_file(category_dict)
