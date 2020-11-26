@@ -59,8 +59,9 @@ class Parse5ka:
             for products in self.parse(self.start_url, category["parent_group_code"]):
                 prods_list = [product for product in products]
                 time.sleep(0.1)
-            category_dict['products'] = prods_list
-            self._save_to_file(category_dict)
+            if prods_list:
+                category_dict['products'] = prods_list
+                self._save_to_file(category_dict)
             prods_list.clear()
 
     @staticmethod
