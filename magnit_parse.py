@@ -7,7 +7,10 @@ import pymongo
 import dotenv
 from urllib.parse import urljoin
 
-dotenv.load_dotenv('.env')
+#dotenv.load_dotenv('.env')
+
+# client = pymongo.MongoClient(os.getenv('DATA_BASE'))
+        # self.db = client['parse_les2']
 
 
 class MagnitParse:
@@ -17,28 +20,17 @@ class MagnitParse:
 
     def __init__(self, start_url):
         self.start_url = start_url
-        client = pymongo.MongoClient(os.getenv('DATA_BASE'))
-        self.db = client['parse_les2']
 
         self.product_template = {
             'url': lambda soup: urljoin(self.start_url, soup.get('href')),
             'promo_name': lambda soup: soup.find('div', attrs={'class': 'card-sale__header'}).text,
             'product_name': lambda soup: soup.find('div', attrs={'class': 'card-sale__title'}).text,
-            'old_price': self._get_price(product),
-            'new_price': '',
+            'old_price': lambda soup: float(f"{soup.find('div', attrs={'class': 'label__price_old'}).contents[1].text}.{soup.find('div', attrs={'class': 'label__price_old'}).contents[3].text}"),
+            'new_price': lambda soup: float(f"{soup.find('div', attrs={'class': 'label__price_new'}).contents[1].text}.{soup.find('div', attrs={'class': 'label__price_new'}).contents[3].text}"),
             'image_url': lambda soup: urljoin(self.start_url, soup.find('img').get('data-src')),
             'date_from': '',
             'date_to': ''
         }
-
-
-    def _get_price(self, product):
-        price = []
-        spans = product.find('div', attrs={'class': 'label__price_old'})
-        for span in spans:
-            price.append(span.text)
-
-        return float(f'{price[0]}.{price[0]}')
 
     @staticmethod
     def _get(*args, **kwargs):
@@ -58,7 +50,8 @@ class MagnitParse:
     def run(self):
         soup = self.soup(self.start_url)
         for product in self.parse(soup):
-            self.save(product)
+            print(1)
+            #self.save(product)
 
     def parse(self, soup):
         catalog = soup.find('div', attrs={'class': 'сatalogue__main'})
