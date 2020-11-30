@@ -7,11 +7,7 @@ import pymongo
 import dotenv
 from urllib.parse import urljoin
 
-
-# dotenv.load_dotenv('.env')
-
-# client = pymongo.MongoClient(os.getenv('DATA_BASE'))
-# self.db = client['parse_les2']
+dotenv.load_dotenv('.env')
 
 
 class MagnitParse:
@@ -21,21 +17,13 @@ class MagnitParse:
 
     def __init__(self, start_url):
         self.start_url = start_url
+        client = pymongo.MongoClient(os.getenv('DATA_BASE'))
+        self.db = client['parse_les2']
 
-        self.months = {
-            'января': '01',
-            'февраля': '02',
-            'марта': '03',
-            'апреля': '04',
-            'мая': '05',
-            'июня': '06',
-            'июля': '07',
-            'августа': '08',
-            'сентября': '09',
-            'октября': '10',
-            'ноября': '11',
-            'декабря': '12'
-        }
+        self.months = {'января': '01', 'февраля': '02', 'марта': '03', 'апреля': '04',
+                       'мая': '05', 'июня': '06', 'июля': '07', 'августа': '08',
+                       'сентября': '09', 'октября': '10', 'ноября': '11', 'декабря': '12'
+                       }
 
         self.product_template = {
             'url': lambda soup: urljoin(self.start_url, soup.get('href')),
@@ -87,8 +75,7 @@ class MagnitParse:
     def run(self):
         soup = self.soup(self.start_url)
         for product in self.parse(soup):
-            print(1)
-            # self.save(product)
+            self.save(product)
 
     def parse(self, soup):
         catalog = soup.find('div', attrs={'class': 'сatalogue__main'})
@@ -103,15 +90,13 @@ class MagnitParse:
         for key, value in self.product_template.items():
             try:
                 result[key] = value(product_soup)
-                print(1)
             except Exception as e:
                 continue
         return result
 
     def save(self, product):
-        # collection = self.db['test_parse_1']
-        # collection.insert_one(product)
-        pass
+        collection = self.db['test_parse_1']
+        collection.insert_one(product)
 
 
 if __name__ == '__main__':
