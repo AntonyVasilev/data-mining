@@ -74,14 +74,14 @@ class GbBlogParse:
         date = soup.find('time', attrs={'class': 'text-md'}).text
         day, text_month, year = date.split(' ')
         month = self.months[text_month]
-        return dt.datetime(year=year, month=month, day=day)
+        return dt.datetime(int(year), month, int(day))
 
     def page_parse(self, soup, url) -> dict:
         response = {
             'url': url,
             'title': soup.find('h1', attrs={'class': 'blogpost-title'}).text,
             'img_url': soup.find('div', attrs={'class': 'blogpost-content'}).find('img').get('src'),
-            'post_date': lambda soup: self._get_date(soup),
+            'post_date': self._get_date(soup),
             'writer': {
                 'name': soup.find('div', attrs={'itemprop': 'author'}).text,
                 'url': urljoin(self.start_url, soup.find('div', attrs={'itemprop': 'author'}).parent.get('href'))
@@ -91,8 +91,9 @@ class GbBlogParse:
                 'author_url': '',
                 'text': ''
             },
-            'tags': []
+            'tags': [tag.text for tag in soup.find_all('a', attrs={'class': 'small'})]
         }
+        print(1)
         return response
 
     # def save(self, post_data: dict):
