@@ -10,10 +10,12 @@ url страницы материала
 """
 
 from typing import Tuple, Set
+import time
 import bs4
 import requests
 from urllib.parse import urljoin
-from database import GBDataBase
+import datetime as dt
+#from database import GBDataBase
 
 
 class GbBlogParse:
@@ -21,13 +23,23 @@ class GbBlogParse:
     def __init__(self, start_url):
         self.start_url = start_url
         self.page_done = set()
-        self.db = GBDataBase('sqlite:///gb_blog.db')
+        # self.db = GBDataBase('sqlite:///gb_blog.db')
+
+        self.months = {
+            'января': 1, 'февраля': 2, 'марта': 3, 'апреля': 4,'мая': 5, 'июня': 6,
+            'июля': 7, 'августа': 8, 'сентября': 9, 'октября': 10, 'ноября': 11, 'декабря': 12
+        }
 
     def _get(self, url):
-        response = requests.get(url)
-        # todo Обработка статусов и ошибки
-        self.page_done.add(url)
-        return bs4.BeautifulSoup(response.text, 'lxml')
+        while True:
+            try:
+                response = requests.get(url)
+                if response.status_code != 200:
+                    raise Exception
+                self.page_done.add(url)
+                return bs4.BeautifulSoup(response.text, 'lxml')
+            except Exception:
+                time.sleep(0.5)
 
     def run(self, url=None):
         if not url:
@@ -38,7 +50,8 @@ class GbBlogParse:
             posts, pagination = self.parse(soup)
             for post_url in posts:
                 page_data = self.page_parse(self._get(post_url), post_url)
-                self.save(page_data)
+                print(1)
+                # self.save(page_data)
 
             for pag_url in pagination:
                 self.run(pag_url)
@@ -57,12 +70,18 @@ class GbBlogParse:
 
         return posts, paginations
 
+    def _get_date(self, soup):
+        date = soup.find('time', attrs={'class': 'text-md'}).text
+        day, text_month, year = date.split(' ')
+        month = self.months[text_month]
+        return dt.datetime(year=year, month=month, day=day)
+
     def page_parse(self, soup, url) -> dict:
-        return {
+        response = {
             'url': url,
             'title': soup.find('h1', attrs={'class': 'blogpost-title'}).text,
-            'img_url': '',
-            'post_date': '',
+            'img_url': soup.find('div', attrs={'class': 'blogpost-content'}).find('img').get('src'),
+            'post_date': lambda soup: self._get_date(soup),
             'writer': {
                 'name': soup.find('div', attrs={'itemprop': 'author'}).text,
                 'url': urljoin(self.start_url, soup.find('div', attrs={'itemprop': 'author'}).parent.get('href'))
@@ -74,9 +93,10 @@ class GbBlogParse:
             },
             'tags': []
         }
+        return response
 
-    def save(self, post_data: dict):
-        self.db.create_post(post_data)
+    # def save(self, post_data: dict):
+    #     self.db.create_post(post_data)
 
 
 if __name__ == '__main__':
