@@ -1,13 +1,13 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import SQLAlchemyError
-import models
+import db_model
 
 
 class GBDataBase:
     def __init__(self, db_url: str):
         engine = create_engine(db_url)
-        models.Base.metadata.create_all(bind=engine)
+        db_model.Base.metadata.create_all(bind=engine)
         self.session_m = sessionmaker(bind=engine)
 
     @staticmethod
