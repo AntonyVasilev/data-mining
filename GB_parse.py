@@ -15,7 +15,7 @@ import bs4
 import requests
 from urllib.parse import urljoin
 import datetime as dt
-#from database import GBDataBase
+from database import GBDataBase
 
 
 class GbBlogParse:
@@ -23,7 +23,7 @@ class GbBlogParse:
     def __init__(self, start_url):
         self.start_url = start_url
         self.page_done = set()
-        # self.db = GBDataBase('sqlite:///gb_blog.db')
+        self.db = GBDataBase('sqlite:///gb_blog.db')
 
         self.months = {
             'января': 1, 'февраля': 2, 'марта': 3, 'апреля': 4,'мая': 5, 'июня': 6,
@@ -51,7 +51,7 @@ class GbBlogParse:
             for post_url in posts:
                 page_data = self.page_parse(self._get(post_url), post_url)
                 print(1)
-                # self.save(page_data)
+                self.save(page_data)
 
             for pag_url in pagination:
                 self.run(pag_url)
@@ -76,6 +76,15 @@ class GbBlogParse:
         month = self.months[text_month]
         return dt.datetime(int(year), month, int(day))
 
+    def _get_tag(self, soup):
+        tags_list = []
+        for tag in soup.find_all('a', attrs={'class': 'small'}):
+            tag_dict = {}
+            tag_dict['url']  = urljoin(self.start_url, tag.get('href'))
+            tag_dict['name'] = tag.text
+            tags_list.append(tag_dict)
+        return tags_list
+
     def page_parse(self, soup, url) -> dict:
         response = {
             'url': url,
@@ -86,18 +95,18 @@ class GbBlogParse:
                 'name': soup.find('div', attrs={'itemprop': 'author'}).text,
                 'url': urljoin(self.start_url, soup.find('div', attrs={'itemprop': 'author'}).parent.get('href'))
             },
-            'comment': {
-                'author_name': '',
-                'author_url': '',
-                'text': ''
-            },
-            'tags': [tag.text for tag in soup.find_all('a', attrs={'class': 'small'})]
+            # 'comment': {
+            #     'author_name': '',
+            #     'author_url': '',
+            #     'text': ''
+            # },
+            'tags': self._get_tag(soup)
         }
         print(1)
         return response
 
-    # def save(self, post_data: dict):
-    #     self.db.create_post(post_data)
+    def save(self, post_data: dict):
+        self.db.create_post(post_data)
 
 
 if __name__ == '__main__':

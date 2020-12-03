@@ -36,8 +36,6 @@ class Post(Base):
 
 
 # todo TAG table
-# todo Comment table
-
 class Tag(Base):
     __tablename__ = 'tag'
     id = Column(Integer, autoincrement=True, primary_key=True, unique=True)
@@ -45,6 +43,7 @@ class Tag(Base):
     name = Column(String, unique=False, nullable=False)
     posts = relationship('Post', secondary=tag_post)
 
+# todo Comment table
 
 # todo Writer table
 class Writer(Base):
