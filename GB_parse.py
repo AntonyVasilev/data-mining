@@ -89,8 +89,14 @@ class GbBlogParse:
             tags_list.append(tag_dict)
         return tags_list
 
-    def _get_comment(self, url):
-        comments = set()
+    def comment_parse(self, data):
+        comment = {
+                'author_name': data['comment']['user']['full_name'],
+                'author_url': data['comment']['user']['url'],
+                'text': data['comment']['body']}
+        return comment
+
+    def _get_comments(self, url):
         while True:
             try:
                 response = requests.get(url, headers=self._headers)
@@ -99,15 +105,15 @@ class GbBlogParse:
             except Exception:
                 time.sleep(0.5)
             data = json.loads(response.text)
-
-        for comment_data in data:
-            comment = {
-                        'author_name': comment_data['comment']['user']['full_name'],
-                        'author_url': comment_data['comment']['user']['url'],
-                        'text': comment_data['comment']['body']}
-            comments.add(comment)
-            print(1)
-        return comments
+            comments = []
+            for comment_data in data:
+                comment = self.comment_parse(comment_data)
+                comments.append(comment)
+                if comment_data['comment']['children']:
+                    data = comment_data['comment']['children']
+                    continue
+                print(1)
+            return comments
 
     def page_parse(self, soup, url) -> dict:
         response = {
@@ -122,7 +128,7 @@ class GbBlogParse:
                 'name': soup.find('div', attrs={'itemprop': 'author'}).text,
                 'url': urljoin(self.start_url, soup.find('div', attrs={'itemprop': 'author'}).parent.get('href'))
             },
-            'comments': self._get_comment(self.api_url),
+            'comments': self._get_comments(self.api_url),
             'tags': self._get_tag(soup)
         }
 
