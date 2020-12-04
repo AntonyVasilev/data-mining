@@ -10,20 +10,24 @@ url страницы материала
 """
 
 from typing import Tuple, Set
+import json
 import time
 import bs4
 import requests
 from urllib.parse import urljoin
 import datetime as dt
-from database import GBDataBase
+from database import DataBase
 
 
 class GbBlogParse:
+    _headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.198 Safari/537.36'}
 
-    def __init__(self, start_url):
+    def __init__(self, start_url, api_url):
         self.start_url = start_url
+        self.api_url = api_url
         self.page_done = set()
-        self.db = GBDataBase('sqlite:///gb_blog.db')
+        self.db = DataBase('sqlite:///gb_blog.db')
 
         self.months = {
             'января': 1, 'февраля': 2, 'марта': 3, 'апреля': 4,'мая': 5, 'июня': 6,
@@ -33,7 +37,7 @@ class GbBlogParse:
     def _get(self, url):
         while True:
             try:
-                response = requests.get(url)
+                response = requests.get(url, headers=self._headers)
                 if response.status_code != 200:
                     raise Exception
                 self.page_done.add(url)
@@ -85,23 +89,51 @@ class GbBlogParse:
             tags_list.append(tag_dict)
         return tags_list
 
+    def _get_comment(self, url):
+        comments = set()
+        while True:
+            try:
+                response = requests.get(url, headers=self._headers)
+                if response.status_code != 200:
+                    raise Exception
+            except Exception:
+                time.sleep(0.5)
+            data = json.loads(response.text)
+
+        for comment_data in data:
+            comment = {
+                        'author_name': comment_data['comment']['user']['full_name'],
+                        'author_url': comment_data['comment']['user']['url'],
+                        'text': comment_data['comment']['body']}
+            comments.add(comment)
+            print(1)
+        return comments
+
     def page_parse(self, soup, url) -> dict:
         response = {
-            'url': url,
-            'title': soup.find('h1', attrs={'class': 'blogpost-title'}).text,
-            'img_url': soup.find('div', attrs={'class': 'blogpost-content'}).find('img').get('src'),
-            'post_date': self._get_date(soup),
+            'post_data': {
+                'url': url,
+                'title': soup.find('h1', attrs={'class': 'blogpost-title'}).text,
+                'image': soup.find('div', attrs={'class': 'blogpost-content'}).find('img').get('src') if soup.find(
+                    'div', attrs={'class': 'blogpost-content'}).find('img') else None,
+                'date': self._get_date(soup)
+            },
             'writer': {
                 'name': soup.find('div', attrs={'itemprop': 'author'}).text,
                 'url': urljoin(self.start_url, soup.find('div', attrs={'itemprop': 'author'}).parent.get('href'))
             },
-            # 'comment': {
-            #     'author_name': '',
-            #     'author_url': '',
-            #     'text': ''
-            # },
+            'comments': self._get_comment(self.api_url),
             'tags': self._get_tag(soup)
         }
+
+        # for comment in self._get_comment(self.api_url):
+        #     print(1)
+        #     comments = {
+        #         'author_name': '',
+        #         'author_url': '',
+        #         'text': ''
+        #     }
+
         print(1)
         return response
 
@@ -110,5 +142,6 @@ class GbBlogParse:
 
 
 if __name__ == '__main__':
-    parser = GbBlogParse('https://geekbrains.ru/posts')
+    parser = GbBlogParse('https://geekbrains.ru/posts',
+                         'https://geekbrains.ru/api/v2/comments?commentable_type=Post&commentable_id=2461&order=desc')
     parser.run()
