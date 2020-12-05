@@ -11,11 +11,6 @@ from sqlalchemy import (
 
 Base = declarative_base()
 
-"""
-many to one _> one to many
-many to many
-"""
-
 tag_post = Table(
     'tag_post',
     Base.metadata,
@@ -34,6 +29,7 @@ class Post(Base):
     writer_id = Column(Integer, ForeignKey('writer.id'))
     writer = relationship("Writer", back_populates='posts')
     tags = relationship('Tag', secondary=tag_post, back_populates='posts')
+    comments = relationship('Comments', back_populates='posts')
 
 
 class Writer(Base):
@@ -41,7 +37,7 @@ class Writer(Base):
     id = Column(Integer, autoincrement=True, primary_key=True, unique=True)
     url = Column(String, unique=True, nullable=False)
     name = Column(String, unique=False, nullable=False)
-    posts = relationship("Post")
+    posts = relationship('Post')
 
 
 class Tag(Base):
@@ -50,3 +46,13 @@ class Tag(Base):
     url = Column(String, unique=True, nullable=False)
     name = Column(String, unique=False, nullable=False)
     posts = relationship('Post', secondary=tag_post)
+
+
+class Comments(Base):
+    __tablename__ = 'comments'
+    id = Column(Integer, autoincrement=True, primary_key=True, unique=True)
+    author_name = Column(String, unique=False, nullable=False)
+    url = Column(String, unique=True, nullable=False)
+    text = Column(String, unique=False, nullable=False)
+    post_id: Column = Column(Integer, ForeignKey('post.id'))
+    posts = relationship('Post')
