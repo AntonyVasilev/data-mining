@@ -22,8 +22,7 @@ class DataBase:
         tags = map(lambda tag_data: self.__get_or_create(session, models.Tag, **tag_data), data['tags'])
         writer = self.__get_or_create(session, models.Writer, **data['writer'])
         post = self.__get_or_create(session, models.Post, **data['post_data'], writer=writer)
-        comments = map(lambda comment_data: self.__get_or_create(
-            session, models.Comments, **comment_data), data['comments'])
+        comments = map(lambda comment_data: models.Comments(**comment_data), data['comments'])
         post.tags.extend(tags)
         post.comments.extend(comments)
         session.add(post)
