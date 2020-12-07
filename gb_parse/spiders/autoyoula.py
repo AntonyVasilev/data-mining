@@ -45,20 +45,17 @@ class AutoyoulaSpider(scrapy.Spider):
         specification = response.css(
                     'div.AdvertCard_specs__2FEHc div.AdvertSpecs_row__ljPcX div.AdvertSpecs_data__xK2Qx')
 
-        spec_dict = {}
-        for feature in specification:
-            spec_dict[feature.attrib.get('data-target')] = feature
-
-        return {'year': int(spec_dict['advert-info-year'].css('a::text').get()),
-                'mileage': spec_dict['advert-info-mileage'].css('::text').get(),
-                'condition': spec_dict['advert-info-isCrashed'].css('::text').get(),
-                'body_type': spec_dict['advert-info-bodyType'].css('a::text').get(),
-                'transmission': spec_dict['advert-info-transmission'].css('::text').get(),
-                'engine': spec_dict['advert-info-engineInfo'].css('::text').get(),
-                'steering_wheel': spec_dict['advert-info-wheelType'].css('::text').get(),
-                'colour': spec_dict['advert-info-color'].css('::text').get(),
-                'drive_type': spec_dict['advert-info-driveType'].css('::text').get(),
-                'engine_power': spec_dict['advert-info-enginePower'].css('::text').get(),
-                'is_customs_cleared': spec_dict['advert-info-isCustom'].css('::text').get(),
-                'number_of_owners': int(spec_dict['advert-info-owners'].css('::text').get())
-            }
+        data = {'year': int(specification.css('[data-target="advert-info-year"] a::text').get()),
+                'mileage': specification.css('[data-target="advert-info-mileage"]::text').get(),
+                'body_type': specification.css('[data-target="advert-info-bodyType"] a::text').get(),
+                'transmission': specification.css('[data-target="advert-info-transmission"]::text').get(),
+                'engine': specification.css('[data-target="advert-info-engineInfo"]::text').get(),
+                'steering_wheel': specification.css('[data-target="advert-info-wheelType"]::text').get(),
+                'colour': specification.css('[data-target="advert-info-color"]::text').get(),
+                'drive_type': specification.css('[data-target="advert-info-driveType"]::text').get(),
+                'engine_power': specification.css('[data-target="advert-info-enginePower"]::text').get(),
+                'is_customs_cleared': specification.css('[data-target="advert-info-isCustom"]::text').get(),
+                'number_of_owners': int(specification.css('[data-target="advert-info-owners"]::text').get())
+                }
+        print(1)
+        return data
