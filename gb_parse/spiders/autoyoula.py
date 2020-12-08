@@ -1,5 +1,6 @@
 import scrapy
 import pymongo
+import re
 
 
 class AutoyoulaSpider(scrapy.Spider):
@@ -34,28 +35,35 @@ class AutoyoulaSpider(scrapy.Spider):
             'images': [img.attrib.get('src') for img in response.css('figure.PhotoGallery_photo__36e_r img')],
             'description': response.css('div.AdvertCard_descriptionInner__KnuRi::text').get(),
             'url': response.url,
-            'author': '',
+            'author': self._get_author(response),
             'specification': self._get_specification(response),
         }
-        print(1)
+        self.db.insert_one(data)
 
-        # self.db.insert_one(data)
-
-    def _get_specification(self, response):
+    @staticmethod
+    def _get_specification(response):
         specification = response.css(
-                    'div.AdvertCard_specs__2FEHc div.AdvertSpecs_row__ljPcX div.AdvertSpecs_data__xK2Qx')
+            'div.AdvertCard_specs__2FEHc div.AdvertSpecs_row__ljPcX div.AdvertSpecs_data__xK2Qx')
 
-        data = {'year': int(specification.css('[data-target="advert-info-year"] a::text').get()),
-                'mileage': specification.css('[data-target="advert-info-mileage"]::text').get(),
-                'body_type': specification.css('[data-target="advert-info-bodyType"] a::text').get(),
-                'transmission': specification.css('[data-target="advert-info-transmission"]::text').get(),
-                'engine': specification.css('[data-target="advert-info-engineInfo"]::text').get(),
-                'steering_wheel': specification.css('[data-target="advert-info-wheelType"]::text').get(),
-                'colour': specification.css('[data-target="advert-info-color"]::text').get(),
-                'drive_type': specification.css('[data-target="advert-info-driveType"]::text').get(),
-                'engine_power': specification.css('[data-target="advert-info-enginePower"]::text').get(),
-                'is_customs_cleared': specification.css('[data-target="advert-info-isCustom"]::text').get(),
-                'number_of_owners': int(specification.css('[data-target="advert-info-owners"]::text').get())
+        data = {'year': int(specification.css('[data-target="advert-info-year"] a::text').get()) if
+                specification.css('[data-target="advert-info-year"] a::text').get() else None,
+                'mileage': specification.css('[data-target="advert-info-mileage"]::text').get() or None,
+                'body_type': specification.css('[data-target="advert-info-bodyType"] a::text').get() or None,
+                'transmission': specification.css('[data-target="advert-info-transmission"]::text').get() or None,
+                'engine': specification.css('[data-target="advert-info-engineInfo"]::text').get() or None,
+                'steering_wheel': specification.css('[data-target="advert-info-wheelType"]::text').get() or None,
+                'colour': specification.css('[data-target="advert-info-color"]::text').get() or None,
+                'drive_type': specification.css('[data-target="advert-info-driveType"]::text').get() or None,
+                'engine_power': specification.css('[data-target="advert-info-enginePower"]::text').get() or None,
+                'is_customs_cleared': specification.css('[data-target="advert-info-isCustom"]::text').get() or None,
+                'number_of_owners': int(specification.css('[data-target="advert-info-owners"]::text').get()) if
+                specification.css('[data-target="advert-info-owners"]::text').get() else None
                 }
-        print(1)
         return data
+
+    @staticmethod
+    def _get_author(response):
+        script = response.css('script:contains("window.transitState = decodeURIComponent")::text').get()
+        re_str = re.compile(r"youlaId%22%2C%22([0-9|a-zA-Z]+)%22%2C%22avatar")
+        result = re.findall(re_str, script)
+        return f'https://youla.ru/user/{result[0]}' if result else None
