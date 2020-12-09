@@ -25,10 +25,11 @@ class HhRemoteSpider(scrapy.Spider):
 
         data = {
             'title': response.xpath('//h1[contains(@data-qa, "vacancy-title")]/text()').get(),
-            'salary': self.__list_to_str(response.xpath('//p[contains(@class, "vacancy-salary")]/span/text()')),
+            'salary': self.__list_to_str(response.xpath(
+                '//p[contains(@class, "vacancy-salary")]/span/text()').getall()),
             'description': self.__list_to_str(response.xpath(
-                '//div[contains(@class, "vacancy-description")]//p//text()')),
-            'skills': self.__list_to_str(response.xpath('//div[contains(@class, "bloko-tag-list")]//text()')),
+                '//div[contains(@class, "vacancy-description")]//p//text()').getall()),
+            'skills': response.xpath('//div[contains(@class, "bloko-tag-list")]//text()').getall(),
             'author_url': response.xpath('//a[contains(@class, "vacancy-company-name")]').attrib.get('href')
         }
         print(1)
@@ -36,7 +37,7 @@ class HhRemoteSpider(scrapy.Spider):
     @staticmethod
     def __list_to_str(list_in):
         result = ''
-        for el in list_in.getall():
+        for el in list_in:
             result += el
         return result
 
