@@ -40,5 +40,4 @@ class AutoyoulaSpider(scrapy.Spider):
         loader.add_value('url', response.url)
         for name, selector in self.itm_template.items():
             loader.add_xpath(name, selector)
-
         yield loader.load_item()

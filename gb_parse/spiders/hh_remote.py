@@ -8,7 +8,8 @@ class HhRemoteSpider(scrapy.Spider):
 
     xpath_query = {
         'pagination': '//a[contains(@class, "HH-Pager-Control")]',
-        'vacancy': '//a[contains(@class, "HH-VacancySidebarTrigger-Link")]'
+        'vacancy': '//a[contains(@class, "HH-VacancySidebarTrigger-Link")]',
+        'author': '//a[contains(@class, "vacancy-company-name")]'
     }
 
     def parse(self, response):
@@ -23,7 +24,7 @@ class HhRemoteSpider(scrapy.Spider):
         for el in response.xpath('//p[contains(@class, "vacancy-salary")]/span/text()'):
             salary_text += el.get()
 
-        data = {
+        vacancy = {
             'title': response.xpath('//h1[contains(@data-qa, "vacancy-title")]/text()').get(),
             'salary': self.__list_to_str(response.xpath(
                 '//p[contains(@class, "vacancy-salary")]/span/text()').getall()),
@@ -31,6 +32,27 @@ class HhRemoteSpider(scrapy.Spider):
                 '//div[contains(@class, "vacancy-description")]//p//text()').getall()),
             'skills': response.xpath('//div[contains(@class, "bloko-tag-list")]//text()').getall(),
             'author_url': response.xpath('//a[contains(@class, "vacancy-company-name")]').attrib.get('href')
+        }
+
+        print(1)
+
+        # response.follow(response.xpath('//a[contains(@class, "vacancy-company-name")]').attrib.get('href'), callback=self.author_parse)
+
+        for author in response.xpath(self.xpath_query['author']):
+            yield response.follow(author.attrib.get('href'), callback=self.author_parse)
+
+    def author_parse(self, response):
+        author = {
+            'title': self.__list_to_str(response.xpath('//h1[contains(@class, "bloko-header-1")]//text()').getall()),
+            'ext_url': response.xpath('//a[contains(@class, "g-user-content")]//@href').get() if
+                response.xpath('//a[contains(@class, "g-user-content")]//@href').get() else None,
+            'areas_of_activity': response.xpath(
+                '//div[contains(@class, "employer-sidebar-block__header")]/following::p[1]/text()').getall() if
+                response.xpath('//div[contains(@class, "employer-sidebar-block__header")]/following::p[1]/text()').getall()
+                else None,
+            'description': self.__list_to_str(
+                response.xpath('//div[contains(@class, "g-user-content")]//text()').getall()) if
+                response.xpath('//div[contains(@class, "g-user-content")]//text()').getall() else None
         }
         print(1)
 
