@@ -31,9 +31,6 @@ def list_to_str(list_in):
         result += el
     return result
 
-# def add_or_none(data):
-#     return data if data else None
-
 
 class AutoYoulaLoader(ItemLoader):
     default_item_class = AutoYoulaItem
@@ -47,6 +44,7 @@ class AutoYoulaLoader(ItemLoader):
 
 
 class HhRemoteLoader(ItemLoader):
+    url_out = TakeFirst()
     default_item_class = HhRemoteItem
     title_out = TakeFirst()
     name_in = ''.join
@@ -55,9 +53,7 @@ class HhRemoteLoader(ItemLoader):
     salary_out = TakeFirst()
     description_in = ''.join
     description_out = TakeFirst()
-    author_url_out = list_to_str
+    employer_url_out = list_to_str
     ext_url_out = TakeFirst()
-    # areas_of_activity_in = add_or_none
     areas_of_activity_out = TakeFirst()
-    # author_description_in = add_or_none
-    author_description_out = ''.join
+    employer_description_out = ''.join

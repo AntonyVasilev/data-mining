@@ -18,26 +18,32 @@ class HhRemoteSpider(scrapy.Spider):
         'salary': '//p[@class="vacancy-salary"]//text()',
         'description': '//div[@data-qa="vacancy-description"]//p//text()',
         'skills': '//div[@class="bloko-tag-list"]//span[@data-qa="bloko-tag__text"]/text()',
-        'author_url': '//a[@data-qa="vacancy-company-name"]/@href'
+        'employer_url': '//a[@data-qa="vacancy-company-name"]/@href'
     }
 
-    xpath_author = {
+    xpath_employer = {
         'name': '//h1/span[contains(@class, "company-header-title-name")]/text()',
         'ext_url': '//a[contains(@data-qa, "company-site")]/@href',
         'areas_of_activity': '//div[contains(@class, "employer-sidebar-block")]/p/text()',
-        'author_description': '//div[contains(@data-qa, "company-description")]//text()'
+        'employer_description': '//div[contains(@data-qa, "company-description")]//text()'
     }
 
-    xpath_author_mark = {
-        'name': '//h1[@class="hh37b_head_wrapper_title"]/text()',
+    xpath_employer_mark = {
+        'name': '//h1[@class=" "]/text()',
         'ext_url': '//div[contains(@class, "tmpl_hh_header")]//a[@target="_blank]"/@href',
-        'author_description': '//div[@class="hh37b__about__wrapper"]//text()'
+        'employer_description': '//div[@class="hh37b__about__wrapper"]//text()'
     }
 
-    xpath_author_gp = {
+    xpath_employer_gp = {
         'name': '//title/text()',
         'ext_url': '//div[contains(@class, "tmpl_gazprom_logo")]//a[@target="_blank]"/@href',
-        'author_description': '//div[@class="tmpl_gazprom_content"]//text()'
+        'employer_description': '//div[@class="tmpl_gazprom_content"]//text()'
+    }
+
+    xpath_employer_main = {
+        'name': '//title/text()',
+        'ext_url': '//div[contains(@class, "tmpl_hh_title")]//a[@target="_blank]"/@href',
+        'employer_description': '//div[@class="tmpl_hh_banner__content"]//text()'
     }
 
     def parse(self, response, **kwargs):
@@ -54,36 +60,27 @@ class HhRemoteSpider(scrapy.Spider):
             loader.add_xpath(key, value)
 
         yield loader.load_item()
+        yield response.follow(response.xpath(self.xpath_vacancy['employer_url']).get(), callback=self.employer_parse)
 
-        if response.xpath(self.xpath_vacancy['author_url']).get()[-4:] == 'MARK':
-            yield response.follow(response.xpath(self.xpath_vacancy['author_url']).get(),
-                                  callback=self.mark_author_parse)
-        elif response.xpath(self.xpath_vacancy['author_url']).get()[-4:] == '39305?dpt=gpn-39305-HOLD':
-            yield response.follow(response.xpath(self.xpath_vacancy['author_url']).get(),
-                                  callback=self.gp_author_parse)
+    def employer_parse(self, response):
+        print(1)
+        loader = HhRemoteLoader(response=response)
+        loader.add_value('url', response.url)
+
+        if response.url[-4:] == 'MARK':
+            for key, value in self.xpath_employer_mark.items():
+                loader.add_xpath(key, value)
+        elif response.url[-4:] == 'main':
+            for key, value in self.xpath_employer_main.items():
+                loader.add_xpath(key, value)
+        elif response.url[-4:] == '39305?dpt=gpn-39305-HOLD':
+            for key, value in self.xpath_employer_gp.items():
+                loader.add_xpath(key, value)
         else:
-            yield response.follow(response.xpath(self.xpath_vacancy['author_url']).get(), callback=self.author_parse)
-
-    def author_parse(self, response):
-        loader = HhRemoteLoader(response=response)
-        loader.add_value('url', response.url)
-        for key, value in self.xpath_author.items():
-            loader.add_xpath(key, value)
+            for key, value in self.xpath_employer.items():
+                loader.add_xpath(key, value)
 
         yield loader.load_item()
-
-    def mark_author_parse(self, response):
-        loader = HhRemoteLoader(response=response)
-        loader.add_value('url', response.url)
-        for key, value in self.xpath_author_mark.items():
-            loader.add_xpath(key, value)
-
-        yield loader.load_item()
-
-    def gp_author_parse(self, response):
-        loader = HhRemoteLoader(response=response)
-        loader.add_value('url', response.url)
-        for key, value in self.xpath_author_gp.items():
-            loader.add_xpath(key, value)
-
-        yield loader.load_item()
+        yield response.follow(
+            response.xpath('//a[contains(@data-qa, "employer-page__employer-vacancies-link")]/@href').get(),
+            callback=self.parse)
