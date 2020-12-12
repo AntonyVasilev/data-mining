@@ -20,3 +20,17 @@ class AutoYoulaItem(scrapy.Item):
     url = scrapy.Field()
     author = scrapy.Field()
     specifications = scrapy.Field()
+
+
+class HhRemoteItem(scrapy.Item):
+    _id = scrapy.Field()
+    url = scrapy.Field()
+    title = scrapy.Field()
+    name = scrapy.Field()
+    salary = scrapy.Field()
+    description = scrapy.Field()
+    skills = scrapy.Field()
+    author_url = scrapy.Field()
+    ext_url = scrapy.Field()
+    areas_of_activity = scrapy.Field()
+    author_description = scrapy.Field()

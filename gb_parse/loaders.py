@@ -2,7 +2,7 @@ import re
 from scrapy import Selector
 from scrapy.loader import ItemLoader
 from itemloaders.processors import TakeFirst, MapCompose
-from .items import AutoYoulaItem
+from .items import AutoYoulaItem, HhRemoteItem
 
 
 def get_author(js_string):
@@ -25,6 +25,16 @@ def specifications_out(data: list):
     return result
 
 
+def list_to_str(list_in):
+    result = ''
+    for el in list_in:
+        result += el
+    return result
+
+# def add_or_none(data):
+#     return data if data else None
+
+
 class AutoYoulaLoader(ItemLoader):
     default_item_class = AutoYoulaItem
     title_out = TakeFirst()
@@ -34,3 +44,20 @@ class AutoYoulaLoader(ItemLoader):
     author_out = TakeFirst()
     specifications_in = MapCompose(get_specifications)
     specifications_out = specifications_out
+
+
+class HhRemoteLoader(ItemLoader):
+    default_item_class = HhRemoteItem
+    title_out = TakeFirst()
+    name_in = ''.join
+    name_out = TakeFirst()
+    salary_in = ''.join
+    salary_out = TakeFirst()
+    description_in = ''.join
+    description_out = TakeFirst()
+    author_url_out = list_to_str
+    ext_url_out = TakeFirst()
+    # areas_of_activity_in = add_or_none
+    areas_of_activity_out = TakeFirst()
+    # author_description_in = add_or_none
+    author_description_out = ''.join
