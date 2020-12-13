@@ -9,7 +9,7 @@
 
 BOT_NAME = 'gb_parse'
 LOG_ENABLE = True
-LOG_LEVEL = 'DEBUG'
+LOG_LEVEL = 'INFO'
 
 SPIDER_MODULES = ['gb_parse.spiders']
 NEWSPIDER_MODULE = 'gb_parse.spiders'
@@ -20,6 +20,8 @@ USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTM
 
 # Obey robots.txt rules
 ROBOTSTXT_OBEY = False
+
+IMAGES_STORE = 'images'
 
 # Configure maximum concurrent requests performed by Scrapy (default: 16)
 CONCURRENT_REQUESTS = 8
@@ -65,7 +67,8 @@ DEFAULT_REQUEST_HEADERS = {
 # Configure item pipelines
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
 ITEM_PIPELINES = {
-   'gb_parse.pipelines.GbParsePipeline': 100,
+    'gb_parse.pipelines.GbParsePipeline': 200,
+    'gb_parse.pipelines.GbImagePipeline': 100
 }
 
 # Enable and configure the AutoThrottle extension (disabled by default)
