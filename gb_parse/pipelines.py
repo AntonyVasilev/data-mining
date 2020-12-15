@@ -25,14 +25,15 @@ class GbParsePipeline:
 
 class GbImagePipeline(ImagesPipeline):
     def get_media_requests(self, item, info):
-        if item['data']['profile_pic_url']:
-            yield Request(item['data'].get('profile_pic_url'))
+        if item['type'] == 'tag':
+            url = item['data'].get('profile_pic_url')
         else:
-            yield Request(item['data'].get('thumbnail_src'))
+            url = item['data'].get('thumbnail_src')
+        yield Request(url)
 
     def item_completed(self, results, item, info):
-        if item['data']['profile_pic_url']:
-            return item['data']['profile_pic_url']
+        if item['type'] == 'tag':
+            item['data']['profile_pic_url'] = [itm[1] for itm in results]
         else:
-            return item['data']['thumbnail_src']
-
+            item['data']['thumbnail_src'] = [itm[1] for itm in results]
+        return item

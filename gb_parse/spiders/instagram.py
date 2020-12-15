@@ -1,15 +1,3 @@
-"""
-Задача авторизованным пользователем обойти список произвольных тегов,
-Сохранить структуру Item олицетворяющую сам Tag (только информация о теге)
-
-Сохранить структуру данных поста, Включая обход пагинации. (каждый пост как отдельный item, словарь внутри node)
-
-Все структуры должны иметь след вид
-
-date_parse (datetime) время когда произошло создание структуры
-data - данные полученые от инстаграм
-Скачать изображения всех постов и сохранить на диск
-"""
 import datetime
 import json
 import scrapy
@@ -54,7 +42,6 @@ class InstagramSpider(scrapy.Spider):
     def tag_parse(self, response):
         data = self.js_data_extract(response)
         tag_page = data['entry_data']['TagPage'][0]['graphql']['hashtag']
-        print(1)
         yield from self.get_tag(response, tag_page)
 
     def get_tag(self, response, tag_page):
@@ -65,7 +52,7 @@ class InstagramSpider(scrapy.Spider):
                                'url': response.url,
                                'profile_pic_url': tag_page['profile_pic_url']
                            },
-                           type='post'
+                           type='tag'
                            )
 
         yield from self.get_post(response, tag_page)
