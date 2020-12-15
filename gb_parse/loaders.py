@@ -1,8 +1,9 @@
 import re
+import datetime
 from scrapy import Selector
 from scrapy.loader import ItemLoader
 from itemloaders.processors import TakeFirst, MapCompose
-from .items import AutoYoulaItem, HhRemoteItem
+from .items import AutoYoulaItem, HhRemoteItem, InstagramItem
 
 
 def get_author(js_string):
@@ -31,6 +32,20 @@ def list_to_str(list_in):
         result += el
     return result
 
+def get_tag_data(tag_page):
+    tag_data_dict = {
+        'id': '',
+        'name': '',
+        'allow_following': '',
+        'is_following': '',
+        'is_top_media_only': '',
+        'profile_pic_url': ''
+    }
+    for key, value in tag_page.items():
+        if key in tag_data_dict.keys():
+            tag_data_dict[key] = value
+    return tag_data_dict
+
 
 class AutoYoulaLoader(ItemLoader):
     default_item_class = AutoYoulaItem
@@ -57,3 +72,16 @@ class HhRemoteLoader(ItemLoader):
     ext_url_out = TakeFirst()
     areas_of_activity_out = TakeFirst()
     employer_description_out = ''.join
+
+
+# class InstagramLoader(ItemLoader):
+#     date_parse_out = datetime.datetime.now()
+#     tag_data_in = MapCompose(get_tag_data)
+#     tag_data_out = TakeFirst()
+#     post_data_out = TakeFirst()
+    # id_out = TakeFirst()
+    # name_out = TakeFirst()
+    # allow_following = TakeFirst()
+    # is_following = TakeFirst()
+    # is_top_media_only = TakeFirst()
+    # profile_pic_url = TakeFirst()

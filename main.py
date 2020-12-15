@@ -16,5 +16,6 @@ if __name__ == '__main__':
     crawl_proc = CrawlerProcess(settings=crawl_settings)
     # crawl_proc.crawl(AutoyoulaSpider)
     # crawl_proc.crawl(HhRemoteSpider)
-    crawl_proc.crawl(InstagramSpider, login=os.getenv('LOGIN'), password=os.getenv('PASSWORD'), tag_list=['python', ])
+    crawl_proc.crawl(InstagramSpider, login=os.getenv('LOGIN'), password=os.getenv('PASSWORD'),
+                     tag_list=['python', 'machinelearning', 'ai'])
     crawl_proc.start()

@@ -10,24 +10,22 @@ date_parse (datetime) время когда произошло создание 
 data - данные полученые от инстаграм
 Скачать изображения всех постов и сохранить на диск
 """
-
+import datetime
 import json
 import scrapy
+from ..items import InstagramTag, InstagramPost
 
 
 class InstagramSpider(scrapy.Spider):
     name = 'instagram'
+    db_type = 'MONGO'
     login_url = 'https://www.instagram.com/accounts/login/ajax/'
     allowed_domains = ['www.instagram.com']
     start_urls = ['https://www.instagram.com/']
-
+    api_url = '/graphql/query/'
     query_hash = {
-        'tag_paginate': '9b498c08113f1e09617a1703c22b2f32'
+        'tag_posts': '9b498c08113f1e09617a1703c22b2f32'
     }
-    # {"tag_name": "python",
-    #  "first": 5  ,
-    #  "after": "QVFDTjZ6UDYxM245VW1BeEJLaHVtcGxwdldiS0dlYnlFRXpoc09uUzFPSDMxbC1ueGNpd0k5MzQ5Mk1jSFpla3hLVUo4b24zSWhFOXg5QVllemp5V1ctVg=="
-    #  https://www.instagram.com/graphql/query/?query_hash=9b498c08113f1e09617a1703c22b2f32&variables=%7B%22tag_name%22%3A%22python%22%2C%22first%22%3A5%2C%22after%22%3A%22QVFDTjZ6UDYxM245VW1BeEJLaHVtcGxwdldiS0dlYnlFRXpoc09uUzFPSDMxbC1ueGNpd0k5MzQ5Mk1jSFpla3hLVUo4b24zSWhFOXg5QVllemp5V1ctVg%3D%3D%22%7D}
 
     def __init__(self, login, password, tag_list, *args, **kwargs):
         self.login = login
@@ -52,12 +50,54 @@ class InstagramSpider(scrapy.Spider):
             if response.json().get('authenticated'):
                 for tag in self.tag_list:
                     yield response.follow(f'/explore/tags/{tag}', callback=self.tag_parse)
-        print(1)
 
     def tag_parse(self, response):
         data = self.js_data_extract(response)
+        tag_page = data['entry_data']['TagPage'][0]['graphql']['hashtag']
         print(1)
+        yield from self.get_tag(response, tag_page)
 
-    def js_data_extract(self, response):
+    def get_tag(self, response, tag_page):
+        yield InstagramTag(date_parse=datetime.datetime.now(),
+                           data={
+                               'id': tag_page['id'],
+                               'name': tag_page['name'],
+                               'url': response.url,
+                               'profile_pic_url': tag_page['profile_pic_url']
+                           },
+                           type='post'
+                           )
+
+        yield from self.get_post(response, tag_page)
+
+    def tag_api_parse(self, response):
+        yield from self.get_post(response, response.json()['data']['hashtag'])
+
+    def get_post(self, response, tag_page):
+        if tag_page['edge_hashtag_to_media']['page_info']['has_next_page']:
+            variables = {
+                'tag_name': tag_page['name'],
+                'first': 100,
+                'after': tag_page['edge_hashtag_to_media']['page_info']['end_cursor'],
+            }
+            url = f'{self.api_url}?query_hash={self.query_hash["tag_posts"]}&variables={json.dumps(variables)}'
+            yield response.follow(
+                url,
+                callback=self.tag_api_parse,
+            )
+
+        yield from self.get_post_item(tag_page['edge_hashtag_to_media']['edges'])
+
+    @staticmethod
+    def get_post_item(edges):
+        for node in edges:
+            yield InstagramPost(
+                date_parse=datetime.datetime.now(),
+                data=node['node'],
+                type='post'
+            )
+
+    @staticmethod
+    def js_data_extract(response):
         script = response.xpath('//script[contains(text(), "window._sharedData = ")]/text()').get()
         return json.loads(script.replace("window._sharedData = ", '')[:-1])

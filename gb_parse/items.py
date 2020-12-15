@@ -34,3 +34,19 @@ class HhRemoteItem(scrapy.Item):
     ext_url = scrapy.Field()
     areas_of_activity = scrapy.Field()
     employer_description = scrapy.Field()
+
+
+class InstagramItem(scrapy.Item):
+    _id = scrapy.Field()
+    date_parse = scrapy.Field()
+    data = scrapy.Field()
+    type = scrapy.Field()
+    image = scrapy.Field()
+
+
+class InstagramTag(InstagramItem):
+    pass
+
+
+class InstagramPost(InstagramItem):
+    pass
