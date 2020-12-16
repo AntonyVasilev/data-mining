@@ -1,7 +1,7 @@
 import datetime
 import json
 import scrapy
-from ..items import InstagramTag, InstagramPost
+from ..items import InstagramTag, InstagramPost, InstagramUser
 
 
 class InstagramSpider(scrapy.Spider):
@@ -15,10 +15,11 @@ class InstagramSpider(scrapy.Spider):
         'tag_posts': '9b498c08113f1e09617a1703c22b2f32'
     }
 
-    def __init__(self, login, password, tag_list, *args, **kwargs):
+    def __init__(self, login, password, tag_list, users_list, *args, **kwargs):
         self.login = login
         self.password = password
         self.tag_list = tag_list
+        self.users_list = users_list
         super(InstagramSpider, self).__init__(*args, **kwargs)
 
     def parse(self, response, **kwargs):
@@ -36,8 +37,38 @@ class InstagramSpider(scrapy.Spider):
             )
         except AttributeError:
             if response.json().get('authenticated'):
-                for tag in self.tag_list:
-                    yield response.follow(f'/explore/tags/{tag}', callback=self.tag_parse)
+                # for tag in self.tag_list:
+                #     yield response.follow(f'/explore/tags/{tag}', callback=self.tag_parse)
+                for user in self.users_list:
+                    yield response.follow(f'/{user}', callback=self.user_parse)
+
+    def user_parse(self, response):
+        user_data = self.js_user_data_extract(response)
+        data = self.js_data_extract(response)
+        print(1)
+        # yield InstagramUser(
+        #     date_parse=datetime.datetime.now(),
+        #     data={
+        #         'type': user_data['@type'],
+        #         'url': response.url,
+        #         'name': user_data['name'],
+        #         'alternateName': user_data['alternateName'],
+        #         'description': user_data['description'],
+        #         'image': data['entry_data']['ProfilePage'][0]['graphql']['user']['profile_pic_url_hd'],
+        #         'ext_url': data['entry_data']['ProfilePage'][0]['graphql']['user']['external_url'],
+        #         'followers': data['entry_data']['ProfilePage'][0]['graphql']['user']['edge_followed_by']['count'],
+        #         'following': data['entry_data']['ProfilePage'][0]['graphql']['user']['edge_follow']['count']
+        #     },
+        #     type='user'
+        # )
+        followers_url = f'{response.url}followers/'
+        following_url = f'{response.url}following/'
+        print(2)
+        yield response.follow(followers_url, callback=self.followers_parse)
+
+    def followers_parse(self, response):
+        data = self.js_data_extract(response)
+        print(3)
 
     def tag_parse(self, response):
         data = self.js_data_extract(response)
@@ -88,3 +119,8 @@ class InstagramSpider(scrapy.Spider):
     def js_data_extract(response):
         script = response.xpath('//script[contains(text(), "window._sharedData = ")]/text()').get()
         return json.loads(script.replace("window._sharedData = ", '')[:-1])
+
+    @staticmethod
+    def js_user_data_extract(response):
+        script = response.xpath('//script[@type="application/ld+json"]/text()').get()
+        return json.loads(script)
