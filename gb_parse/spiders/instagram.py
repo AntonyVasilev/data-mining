@@ -12,7 +12,8 @@ class InstagramSpider(scrapy.Spider):
     start_urls = ['https://www.instagram.com/']
     api_url = '/graphql/query/'
     query_hash = {
-        'tag_posts': '9b498c08113f1e09617a1703c22b2f32'
+        'tag_posts': '9b498c08113f1e09617a1703c22b2f32',
+        'followers': 'c76146de99bb02f6415203be841dd25a'
     }
 
     def __init__(self, login, password, tag_list, users_list, *args, **kwargs):
@@ -43,28 +44,35 @@ class InstagramSpider(scrapy.Spider):
                     yield response.follow(f'/{user}', callback=self.user_parse)
 
     def user_parse(self, response):
-        user_data = self.js_user_data_extract(response)
         data = self.js_data_extract(response)
+        user_data = data['entry_data']['ProfilePage'][0]['graphql']['user']
         print(1)
-        # yield InstagramUser(
-        #     date_parse=datetime.datetime.now(),
-        #     data={
-        #         'type': user_data['@type'],
-        #         'url': response.url,
-        #         'name': user_data['name'],
-        #         'alternateName': user_data['alternateName'],
-        #         'description': user_data['description'],
-        #         'image': data['entry_data']['ProfilePage'][0]['graphql']['user']['profile_pic_url_hd'],
-        #         'ext_url': data['entry_data']['ProfilePage'][0]['graphql']['user']['external_url'],
-        #         'followers': data['entry_data']['ProfilePage'][0]['graphql']['user']['edge_followed_by']['count'],
-        #         'following': data['entry_data']['ProfilePage'][0]['graphql']['user']['edge_follow']['count']
-        #     },
-        #     type='user'
-        # )
-        followers_url = f'{response.url}followers/'
-        following_url = f'{response.url}following/'
-        print(2)
-        yield response.follow(followers_url, callback=self.followers_parse)
+        yield InstagramUser(
+            date_parse=datetime.datetime.now(),
+            data=user_data,
+            type='user'
+        )
+        yield from self.get_followed_api_request(response, user_data)
+
+    def get_followed_api_request(self, response, user_data, variables=None):
+        if not variables:
+            variables = {
+                'id': user_data['id'],
+                'first': 100
+            }
+        url = f'{self.api_url}?query_hash={self.query_hash["followers"]}&variables={json.dumps(variables)}'
+        yield response.follow(url, callback=self.get_followed_api, cb_kwargs={'user_data': user_data})
+
+    def get_followed_api(self, response, user_data):
+        data = response.json()
+        print(1)
+        if data['data']['user']['edge_followed_by']['page_info']['has_next_page']:
+            variables = {
+                'id': user_data['id'],
+                'first': 100,
+                'after': data['data']['user']['edge_followed_by']['page_info']['end_cursor']
+            }
+            yield from self.get_followed_api_request(response, user_data, variables)
 
     def followers_parse(self, response):
         data = self.js_data_extract(response)
@@ -119,8 +127,3 @@ class InstagramSpider(scrapy.Spider):
     def js_data_extract(response):
         script = response.xpath('//script[contains(text(), "window._sharedData = ")]/text()').get()
         return json.loads(script.replace("window._sharedData = ", '')[:-1])
-
-    @staticmethod
-    def js_user_data_extract(response):
-        script = response.xpath('//script[@type="application/ld+json"]/text()').get()
-        return json.loads(script)

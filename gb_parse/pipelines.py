@@ -30,7 +30,7 @@ class GbImagePipeline(ImagesPipeline):
         elif item['type'] == 'post':
             img_url = item['data'].get('thumbnail_src')
         elif item['type'] == 'user':
-            img_url = item['data'].get('image')
+            img_url = item['data'].get('profile_pic_url_hd')
         yield Request(img_url)
 
     def item_completed(self, results, item, info):
@@ -39,5 +39,5 @@ class GbImagePipeline(ImagesPipeline):
         elif item['type'] == 'post':
             item['data']['thumbnail_src'] = [itm[1] for itm in results]
         elif item['type'] == 'user':
-            item['data']['image'] = [itm[1] for itm in results]
+            item['data']['profile_pic_url_hd'] = [itm[1] for itm in results]
         return item
