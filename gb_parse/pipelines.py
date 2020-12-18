@@ -31,13 +31,21 @@ class GbImagePipeline(ImagesPipeline):
             img_url = item['data'].get('thumbnail_src')
         elif item['type'] == 'user':
             img_url = item['data'].get('profile_pic_url_hd')
+        elif item['type'] == 'follower':
+            img_url = item['profile_pic_url']
+        else:
+            pass
         yield Request(img_url)
 
-    def item_completed(self, results, item, info):
-        if item['type'] == 'tag':
-            item['data']['profile_pic_url'] = [itm[1] for itm in results]
-        elif item['type'] == 'post':
-            item['data']['thumbnail_src'] = [itm[1] for itm in results]
-        elif item['type'] == 'user':
-            item['data']['profile_pic_url_hd'] = [itm[1] for itm in results]
-        return item
+    # def item_completed(self, results, item, info):
+    #     if item['type'] == 'tag':
+    #         item['data']['profile_pic_url'] = [itm[1] for itm in results]
+    #     elif item['type'] == 'post':
+    #         item['data']['thumbnail_src'] = [itm[1] for itm in results]
+    #     elif item['type'] == 'user':
+    #         item['data']['profile_pic_url_hd'] = [itm[1] for itm in results]
+    #     elif item['type'] == 'follower':
+    #         item['profile_pic_url'] = [itm[1] for itm in results]
+    #     else:
+    #         pass
+    #     return item

@@ -68,7 +68,7 @@ DEFAULT_REQUEST_HEADERS = {
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
 ITEM_PIPELINES = {
     'gb_parse.pipelines.GbParsePipeline': 200,
-    'gb_parse.pipelines.GbImagePipeline': 100
+    # 'gb_parse.pipelines.GbImagePipeline': 100
 }
 
 # Enable and configure the AutoThrottle extension (disabled by default)
