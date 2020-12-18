@@ -36,6 +36,13 @@ class HhRemoteItem(scrapy.Item):
     employer_description = scrapy.Field()
 
 
+class InstagramMutual(scrapy.Item):
+    _id = scrapy.Field()
+    user_name = scrapy.Field()
+    user_id = scrapy.Field()
+    mutual_follow = scrapy.Field()
+
+
 class InstagramItem(scrapy.Item):
     _id = scrapy.Field()
     date_parse = scrapy.Field()
@@ -57,17 +64,17 @@ class InstagramUser(InstagramItem):
 
 class InstagramFollow(scrapy.Item):
     _id = scrapy.Field()
-    date_parse = scrapy.Field()
     user_name = scrapy.Field()
     user_id = scrapy.Field()
     follow_name = scrapy.Field()
     follow_id = scrapy.Field()
+    type = scrapy.Field()
 
 
 class InstagramFollowed(scrapy.Item):
     _id = scrapy.Field()
-    date_parse = scrapy.Field()
     user_name = scrapy.Field()
     user_id = scrapy.Field()
     followed_name = scrapy.Field()
     followed_id = scrapy.Field()
+    type = scrapy.Field()
