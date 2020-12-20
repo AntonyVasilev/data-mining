@@ -69,6 +69,8 @@ class InstagramFollow(scrapy.Item):
     follow_name = scrapy.Field()
     follow_id = scrapy.Field()
     type = scrapy.Field()
+    layer = scrapy.Field()
+    edge = scrapy.Field()
 
 
 class InstagramFollowed(scrapy.Item):
@@ -78,3 +80,5 @@ class InstagramFollowed(scrapy.Item):
     followed_name = scrapy.Field()
     followed_id = scrapy.Field()
     type = scrapy.Field()
+    layer = scrapy.Field()
+    edge = scrapy.Field()

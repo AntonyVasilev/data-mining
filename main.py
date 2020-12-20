@@ -3,28 +3,33 @@ from scrapy.crawler import CrawlerProcess
 from scrapy.settings import Settings
 from gb_parse.spiders.instagram import InstagramSpider
 from mutual_friends import MutualFriends
+from handshakes import Handshakes
 
 import dotenv
 
 dotenv.load_dotenv('.env')
 
 if __name__ == '__main__':
-    users_list = ['mr.proghammer', 'codeforgeyt']
+    start_users_list = ['mr.proghammer', 'codeforgeyt']
+
+    layer = 0
+    users_list = [[[start_users_list[0]], [start_users_list[1]]], ]
+
     crawl_settings = Settings()
     crawl_settings.setmodule('gb_parse.settings')
     crawl_proc = CrawlerProcess(settings=crawl_settings)
+    mutual_proc = MutualFriends()
+    handshakes_proc = Handshakes()
+
     while True:
         crawl_proc.crawl(InstagramSpider, login=os.getenv('LOGIN'), password=os.getenv('PASSWORD'),
-                         users_list=users_list)
+                         users_list=users_list[layer], layer=layer)
         crawl_proc.start()
-        mutual_proc = MutualFriends()
-        handshakes, mutual_friends_list = mutual_proc.run(users_list)
-        if handshakes:
-            break
-        else:
-            users_list.clear()
-            for mutual_friends in mutual_friends_list:
-                for value in mutual_friends.values():
-                    users_list.append(value)
-
-    print(users_list, handshakes)
+        # mutual_proc.run(users_list[layer], layer)
+        # has_handshakes = handshakes_proc.run(users_list[layer], layer)
+        # has_handshakes = True
+        # if has_handshakes:
+        #     break
+        # else:
+        #     layer += 1
+    # print(users_list)

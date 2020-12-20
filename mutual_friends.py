@@ -7,47 +7,43 @@ class MutualFriends:
     def __init__(self):
         self.db = MongoClient()['parse_gb']
 
-    def run(self, user_names):
-        mutual_friends_list = []
-        for user_name in user_names:
-            follow_ids_list = self.get_follow_list(user_name)
-            mutual_friends = self.get_mutual_friends(user_name, follow_ids_list)
-            mutual_friends_list.append(mutual_friends)
-
-        handshakes = self.get_handshakes(mutual_friends_list)
-        print(handshakes)
-        # return handshakes, mutual_friends_list
-
-    def get_follow_list(self, user_name) -> List:
+    def run(self, user_names_list, layer):
+        # mutual_friends_list = []
         collection = self.db['instagram']
+        for user_names in user_names_list:
+            for user_name in user_names:
+                user_id = collection.find_one({'user_name': user_name})['user_id']
+                follow_ids_list = self.get_follow_list(user_name, collection, layer)
+                self.get_mutual_friends(user_name, user_id, collection, follow_ids_list, layer)
+                # mutual_friends_list.append(mutual_friends)
+
+    @staticmethod
+    def get_follow_list(user_name, collection, layer) -> List:
         follow_ids_list = []
-        for item in collection.find({'user_name': user_name, 'type': 'follow'}):
+        for item in collection.find({'user_name': user_name, 'type': 'follow', 'layer': layer}):
             follow_ids_list.append(item['follow_id'])
         # print(len(follow_ids_list))
         return follow_ids_list
 
-    def get_mutual_friends(self, user_name, follow_ids_list) -> Dict:
+    @staticmethod
+    def get_mutual_friends(user_name, user_id, collection, follow_ids_list, layer):
         mutual_friends_dict = {}
-        collection = self.db['instagram']
-        for item in collection.find({'user_name': user_name, 'type': 'followed'}):
+        for item in collection.find({'user_name': user_name, 'type': 'followed', 'layer': layer}):
+            user_id = item['user_id']
             if item['followed_id'] in follow_ids_list:
                 mutual_friends_dict[item['followed_id']] = item['followed_name']
-        # print(len(mutual_friends_dict))
-        return mutual_friends_dict
-
-    @staticmethod
-    def get_handshakes(mutual_friends_list):
-        results_list = []
-        list_len = len(mutual_friends_list)
-        for i in range(list_len - 1):
-            temp_list = []
-            for user_id, user_name in mutual_friends_list[i].items():
-                if user_id in mutual_friends_list[i + 1].keys():
-                    temp_list.append({user_id: user_name})
-            results_list.append(temp_list)
-        return results_list
+        mutual_friends = {
+            'user_id': user_id,
+            'user_name': user_name,
+            'mutual': mutual_friends_dict,
+            'type': 'mutual',
+            'layer': layer,
+        }
+        print(len(mutual_friends_dict))
+        print(mutual_friends)
+        collection.insert_one(mutual_friends)
 
 
 if __name__ == '__main__':
     proghamme = MutualFriends()
-    proghamme.run(['mr.proghammer', 'codeforgeyt'])
+    proghamme.run([['mr.proghammer'], ['codeforgeyt']], 0)
