@@ -3,7 +3,7 @@ from scrapy.crawler import CrawlerProcess
 from scrapy.settings import Settings
 from gb_parse.spiders.instagram import InstagramSpider
 from mutual_friends import MutualFriends
-from handshakes import Handshakes
+from handshakes import Handshakes, HandshakesChain
 
 import dotenv
 
@@ -20,16 +20,19 @@ if __name__ == '__main__':
     crawl_proc = CrawlerProcess(settings=crawl_settings)
     mutual_proc = MutualFriends()
     handshakes_proc = Handshakes()
+    handshakes_chain_proc = HandshakesChain()
 
     while True:
         crawl_proc.crawl(InstagramSpider, login=os.getenv('LOGIN'), password=os.getenv('PASSWORD'),
                          users_list=users_list[layer], layer=layer)
         crawl_proc.start()
-        # mutual_proc.run(users_list[layer], layer)
-        # has_handshakes = handshakes_proc.run(users_list[layer], layer)
-        # has_handshakes = True
-        # if has_handshakes:
-        #     break
-        # else:
-        #     layer += 1
-    # print(users_list)
+        mutual_names_list = mutual_proc.run(users_list[layer], layer)
+        handshakes_list = handshakes_proc.run(users_list[layer], layer)
+        # handshakes_list = True
+        if handshakes_list:
+            handshakes_chain_proc.run(handshakes_list, layer)
+            break
+        else:
+            layer += 1
+            users_list.append(mutual_names_list)
+            print('ОШИБКА!!!')

@@ -1,8 +1,7 @@
-import datetime
+
 import json
 import scrapy
-from pymongo import MongoClient
-from ..items import InstagramUser, InstagramFollow, InstagramFollowed, InstagramMutual
+from ..items import InstagramFollow, InstagramFollowed
 
 
 class InstagramSpider(scrapy.Spider):
@@ -52,14 +51,11 @@ class InstagramSpider(scrapy.Spider):
                 for users in self.users_list:
                     for user in users:
                         yield response.follow(f'/{user}', callback=self.user_parse, cb_kwargs={'edge': edge})
+                    edge += 1
 
     def user_parse(self, response, edge):
         data = self.js_data_extract(response)
         user_data = data['entry_data']['ProfilePage'][0]['graphql']['user']
-        # yield InstagramUser(
-        #     date_parse=datetime.datetime.now(),
-        #     data=user_data
-        # )
 
         yield from self.get_follow_api_request(response, user_data, edge)
         yield from self.get_followed_api_request(response, user_data, edge)
