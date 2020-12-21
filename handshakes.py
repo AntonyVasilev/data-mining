@@ -36,6 +36,8 @@ class HandshakesChain:
     def run(self, handshakes_list, layer):
         collection = self.db['instagram']
         self.get_handshakes_chain(handshakes_list, collection, layer)
+        chain_list = self.create_chain(collection, handshakes_list, layer)
+        return chain_list
 
     @staticmethod
     def get_handshakes_chain(handshakes_list, collection, max_layer):
@@ -63,10 +65,31 @@ class HandshakesChain:
                     }
                     collection.insert_one(result_1)
 
+    @staticmethod
+    def create_chain(collection, handshakes_list, layer):
+        chain_list = []
+        for el in range(layer + 1):
+            temp_list = []
+            users = collection.find({'type': 'chain', 'layer': el, 'edge': 0})
+            for user in users:
+                temp_list.append({'id': user['user_id'], 'name': user['user_name']})
+            chain_list.append(temp_list)
+        chain_list.append(handshakes_list)
+        for el in range(layer, -1, -1):
+            temp_list = []
+            users = collection.find({'type': 'chain', 'layer': el, 'edge': 1})
+            for user in users:
+                temp_list.append({'id': user['user_id'], 'name': user['user_name']})
+            chain_list.append(temp_list)
+        return chain_list
+
 
 if __name__ == '__main__':
     handshakes = Handshakes()
     handshakes.run([['mr.proghammer'], ['codeforgeyt']], 0)
 
     handshakes_chain = HandshakesChain()
-    handshakes_chain.run([{'id': '42371344560', 'name': 'authentic_programmer'}], 0)
+    chain_list = handshakes_chain.run([{'id': '42371344560', 'name': 'authentic_programmer'}], 0)
+
+    for i, block in enumerate(chain_list):
+        print(f'{i + 1}. {block}')

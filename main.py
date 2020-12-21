@@ -30,9 +30,12 @@ if __name__ == '__main__':
         handshakes_list = handshakes_proc.run(users_list[layer], layer)
         # handshakes_list = True
         if handshakes_list:
-            handshakes_chain_proc.run(handshakes_list, layer)
+            chain_list = handshakes_chain_proc.run(handshakes_list, layer)
             break
         else:
             layer += 1
             users_list.append(mutual_names_list)
             print('ОШИБКА!!!')
+
+    for i, block in enumerate(chain_list):
+        print(f'{i + 1}. {block}')

@@ -18,7 +18,6 @@ class MutualFriends:
                 self.get_mutual_friends(user_name, user_id, collection, follow_ids_list, layer, edge)
                 mutual_names = self.get_mutual_names_list(collection, layer, edge)
                 mutual_friends_list.append(mutual_names)
-        print(1)
         return mutual_friends_list
 
     @staticmethod
@@ -57,6 +56,5 @@ class MutualFriends:
 
 
 if __name__ == '__main__':
-    proghamme = MutualFriends()
-    names_list = proghamme.run([['mr.proghammer'], ['codeforgeyt']], 0)
-    print(1)
+    mutual_proc = MutualFriends()
+    names_list = mutual_proc.run([['mr.proghammer'], ['codeforgeyt']], 0)
