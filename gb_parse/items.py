@@ -71,6 +71,7 @@ class InstagramFollow(scrapy.Item):
     type = scrapy.Field()
     layer = scrapy.Field()
     edge = scrapy.Field()
+    has_mutual = scrapy.Field()
 
 
 class InstagramFollowed(scrapy.Item):
@@ -82,3 +83,4 @@ class InstagramFollowed(scrapy.Item):
     type = scrapy.Field()
     layer = scrapy.Field()
     edge = scrapy.Field()
+    has_mutual = scrapy.Field()

@@ -69,7 +69,7 @@ DEFAULT_REQUEST_HEADERS = {
 ITEM_PIPELINES = {
     'gb_parse.pipelines.GbParsePipeline': 100,
     'gb_parse.pipelines.MutualFriendsPipeline': 200,
-    # 'gb_parse.pipelines.HandshakesPipeline': 300
+    'gb_parse.pipelines.HandshakesPipeline': 300
 }
 
 # Enable and configure the AutoThrottle extension (disabled by default)
