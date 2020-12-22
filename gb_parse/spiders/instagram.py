@@ -21,11 +21,10 @@ class InstagramSpider(scrapy.Spider):
     follow_ids_list = []
     mutual_friends_dict = {}
 
-    def __init__(self, login, password, users_list, layer, *args, **kwargs):
+    def __init__(self, login, password, users_list, *args, **kwargs):
         self.login = login
         self.password = password
         self.users_list = users_list
-        self.layer = layer
         super(InstagramSpider, self).__init__(*args, **kwargs)
 
     def parse(self, response, **kwargs):
@@ -48,9 +47,8 @@ class InstagramSpider(scrapy.Spider):
             )
         except AttributeError:
             if response.json().get('authenticated'):
-                for users in self.users_list:
-                    for user in users:
-                        yield response.follow(f'/{user}', callback=self.user_parse, cb_kwargs={'edge': edge})
+                for user in self.users_list:
+                    yield response.follow(f'/{user}', callback=self.user_parse, cb_kwargs={'edge': edge})
                     edge += 1
 
     def user_parse(self, response, edge):
@@ -74,7 +72,7 @@ class InstagramSpider(scrapy.Spider):
     def get_follow_api(self, response, user_data, edge):
         if b'application/json' in response.headers['Content-Type']:
             data = response.json()
-            yield from self.get_follow_item(user_data, data['data']['user']['edge_follow']['edges'], edge)
+            yield from self.get_follow_item(response, user_data, data['data']['user']['edge_follow']['edges'], edge)
 
             if data['data']['user']['edge_follow']['page_info']['has_next_page']:
                 variables = {
@@ -84,7 +82,7 @@ class InstagramSpider(scrapy.Spider):
                 }
                 yield from self.get_follow_api_request(response, user_data, edge, variables)
 
-    def get_follow_item(self, user_data, follow_users_data, edge):
+    def get_follow_item(self, response, user_data, follow_users_data, edge):
         for follow_user in follow_users_data:
             self.follow_ids_list.append(follow_user['node']['id'])
             yield InstagramFollow(
@@ -93,9 +91,11 @@ class InstagramSpider(scrapy.Spider):
                 follow_id=follow_user['node']['id'],
                 follow_name=follow_user['node']['username'],
                 type='follow',
-                layer=self.layer,
+                # layer=self.layer,
                 edge=edge
             )
+            # yield response.follow(f'/{follow_user["node"]["username"]}', callback=self.user_parse, cb_kwargs={'edge': edge})
+
 
     def get_followed_api_request(self, response, user_data, edge, variables=None):
         if not variables:
@@ -131,7 +131,7 @@ class InstagramSpider(scrapy.Spider):
                 followed_id=followed_user['node']['id'],
                 followed_name=followed_user['node']['username'],
                 type='followed',
-                layer=self.layer,
+                # layer=self.layer,
                 edge=edge
             )
 
