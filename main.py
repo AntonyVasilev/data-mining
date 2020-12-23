@@ -3,12 +3,13 @@ from scrapy.crawler import CrawlerProcess
 from scrapy.settings import Settings
 from gb_parse.spiders.instagram import InstagramSpider
 
+
 import dotenv
 dotenv.load_dotenv('.env')
 
 if __name__ == '__main__':
     # users_list = ['mr.proghammer', 'codeforgeyt']
-    users_list = ['mr.proghammer', 'n5code']
+    users_list = ['mr.proghammer', 'code__zone']
     crawl_settings = Settings()
     crawl_settings.setmodule('gb_parse.settings')
     crawl_proc = CrawlerProcess(settings=crawl_settings)
