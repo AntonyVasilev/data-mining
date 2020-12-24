@@ -29,8 +29,6 @@ class MutualFriendsPipeline:
         self.db = MongoClient()['parse_gb']
 
     def process_item(self, item, spider):
-        mutual_friends_list = []
-        # adapter = ItemAdapter(item)
         collection = self.db[spider.name]
 
         if item['type'] == 'follow':
@@ -91,27 +89,11 @@ class HandshakesPipeline:
 
             for user in mutual_0_list:
                 if user in mutual_1_list:
-                    handshake_users.append(user)
-
-
-                # users_0 = mutual_0_list
-                # users_1 = mutual_1_list
-
-        # if handshake_users:
-        #     mutual_user = []
-        #     while not mutual_user:
-        #         chain_list = []
-        #         for handshake_user in handshake_users:
-        #             mutual_user = collection.find({'mutual_name': handshake_user, 'type': 'mutual'})
-        #             if mutual_user in spider.users_list:
-        #                 collection.insert_one({})
-        #                 break
-        #             else:
-
-
-
-
-
+                    user_id = collection.find_one({'mutual_name': user})
+                    collection.insert_one({
+                        'user_id': user_id,
+                        'user_name': user
+                    })
+                    spider.close_down = True
 
         return item
-

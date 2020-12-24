@@ -1,6 +1,7 @@
 
 import json
 import scrapy
+from scrapy.exceptions import CloseSpider
 from ..items import InstagramFollow, InstagramFollowed
 from pymongo import MongoClient
 
@@ -22,6 +23,7 @@ class InstagramSpider(scrapy.Spider):
     follow_ids_list = []
     mutual_friends_dict = {}
     mutual_names = set()
+    close_down = False
 
     def __init__(self, login, password, users_list, *args, **kwargs):
         self.login = login
@@ -31,12 +33,6 @@ class InstagramSpider(scrapy.Spider):
         self.db = MongoClient()['parse_gb']
 
     def parse(self, response, **kwargs):
-
-        # collection = self.db[self.name]
-        # if self.follow_ids_list:
-        #     self.follow_ids_list.clear()
-        # if self.mutual_friends_dict:
-        #     self.mutual_friends_dict.clear()
         try:
             js_data = self.js_data_extract(response)
             yield scrapy.FormRequest(
@@ -56,10 +52,8 @@ class InstagramSpider(scrapy.Spider):
 
                 self.sending_request(response)
 
-                # while not is_finish:
-                #     mutual_users = collection.find({'type': 'mutual'})
-                #     for mutual_user in mutual_users:
-                #         yield response.follow(f'/{mutual_user["mutual_name"]}', callback=self.user_parse)
+        if self.close_down:
+            raise CloseSpider(reason="Handshake's chain is found")
 
     def user_parse(self, response):
         data = self.js_data_extract(response)
