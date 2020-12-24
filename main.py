@@ -8,8 +8,8 @@ import dotenv
 dotenv.load_dotenv('.env')
 
 if __name__ == '__main__':
-    # users_list = ['mr.proghammer', 'codeforgeyt']
-    users_list = ['mr.proghammer', 'code__zone']
+    users_list = ['mr.proghammer', 'codeforgeyt']
+    # users_list = ['mr.proghammer', 'code__zone']
     crawl_settings = Settings()
     crawl_settings.setmodule('gb_parse.settings')
     crawl_proc = CrawlerProcess(settings=crawl_settings)

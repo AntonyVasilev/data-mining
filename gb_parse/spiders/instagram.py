@@ -21,6 +21,7 @@ class InstagramSpider(scrapy.Spider):
 
     follow_ids_list = []
     mutual_friends_dict = {}
+    mutual_names = set()
 
     def __init__(self, login, password, users_list, *args, **kwargs):
         self.login = login
@@ -30,8 +31,8 @@ class InstagramSpider(scrapy.Spider):
         self.db = MongoClient()['parse_gb']
 
     def parse(self, response, **kwargs):
-        is_finish = False
-        collection = self.db[self.name]
+
+        # collection = self.db[self.name]
         # if self.follow_ids_list:
         #     self.follow_ids_list.clear()
         # if self.mutual_friends_dict:
@@ -53,10 +54,12 @@ class InstagramSpider(scrapy.Spider):
                 for user in self.users_list:
                     yield response.follow(f'/{user}', callback=self.user_parse)
 
-                while not is_finish:
-                    mutual_users = collection.find({'type': 'mutual'})
-                    for mutual_user in mutual_users:
-                        yield response.follow(f'/{mutual_user["mutual_name"]}', callback=self.user_parse)
+                self.sending_request(response)
+
+                # while not is_finish:
+                #     mutual_users = collection.find({'type': 'mutual'})
+                #     for mutual_user in mutual_users:
+                #         yield response.follow(f'/{mutual_user["mutual_name"]}', callback=self.user_parse)
 
     def user_parse(self, response):
         data = self.js_data_extract(response)
@@ -140,8 +143,9 @@ class InstagramSpider(scrapy.Spider):
             )
             # yield response.follow(f'/{followed_user["node"]["username"]}', callback=self.user_parse)
 
-    def sending_request(self, response, user_name):
-        response.follow(f'/{user_name}', callback=self.user_parse)
+    def sending_request(self, response):
+        for name in self.mutual_names:
+            response.follow(f'/{name}', callback=self.user_parse)
 
     @staticmethod
     def js_data_extract(response):
