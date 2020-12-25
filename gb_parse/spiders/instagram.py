@@ -2,7 +2,7 @@
 import json
 import scrapy
 from scrapy.exceptions import CloseSpider
-from ..items import InstagramFollow, InstagramFollowed
+from ..items import InstagramFollow, InstagramFollowed, InstagramUsers
 from pymongo import MongoClient
 
 
@@ -49,7 +49,6 @@ class InstagramSpider(scrapy.Spider):
             if response.json().get('authenticated'):
                 for user in self.users_list:
                     yield response.follow(f'/{user}', callback=self.user_parse)
-
                 self.sending_request(response)
 
         if self.close_down:
@@ -97,7 +96,12 @@ class InstagramSpider(scrapy.Spider):
                 follow_name=follow_user['node']['username'],
                 type='follow'
             )
-            # yield response.follow(f'/{follow_user["node"]["username"]}', callback=self.user_parse)
+            yield InstagramUsers(
+                user_id=follow_user['node']['id'],
+                user_name=follow_user['node']['username'],
+                type='user'
+            )
+            yield response.follow(f'/{follow_user["node"]["username"]}', callback=self.user_parse)
 
     def get_followed_api_request(self, response, user_data, variables=None):
         if not variables:
@@ -135,7 +139,12 @@ class InstagramSpider(scrapy.Spider):
                 followed_name=followed_user['node']['username'],
                 type='followed'
             )
-            # yield response.follow(f'/{followed_user["node"]["username"]}', callback=self.user_parse)
+            yield InstagramUsers(
+                user_id=followed_user['node']['id'],
+                user_name=followed_user['node']['username'],
+                type='user'
+            )
+            yield response.follow(f'/{followed_user["node"]["username"]}', callback=self.user_parse)
 
     def sending_request(self, response):
         for name in self.mutual_names:

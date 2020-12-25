@@ -84,3 +84,9 @@ class InstagramFollowed(scrapy.Item):
     layer = scrapy.Field()
     edge = scrapy.Field()
     has_mutual = scrapy.Field()
+
+class InstagramUsers(scrapy.Item):
+    _id = scrapy.Field()
+    user_name = scrapy.Field()
+    user_id = scrapy.Field()
+    type = scrapy.Field()
