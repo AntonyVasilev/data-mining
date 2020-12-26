@@ -11,6 +11,7 @@ from itemadapter import ItemAdapter
 from scrapy import Request, pipelines
 from pymongo import MongoClient
 import networkx as nx
+import functools
 
 
 class GbParsePipeline:
@@ -29,30 +30,53 @@ class HandshakesPipeline:
         self.db = MongoClient()['parse_gb']
 
     def process_item(self, item, spider):
+        has_path_ab = False
+        has_path_ba = False
         users_list = spider.users_list
         collection = self.db['instagram']
-        G = nx.DiGraph()
 
-        node_a = collection.find_one({'user_name': users_list[0]})['user_id']
-        node_b = collection.find_one({'user_name': users_list[1]})['user_id']
-
-        if item['type'] == 'follow':
-            G.add_nodes_from([item['user_id'], item['follow_id']])
-            G.add_edge(item['user_id'], item['follow_id'])
+        # try:
+        #     node_a = collection.find_one({'user_name': users_list[0]})['user_id']
+        #     node_b = collection.find_one({'user_name': users_list[1]})['user_id']
+        # except TypeError:
+        #     pass
 
         if item['type'] == 'follow':
-            G.add_nodes_from([item['user_id'], item['followed_id']])
-            G.add_edge(item['followed_id'], item['user_id'])
+            if item['user_name'] not in spider.G.nodes:
+                spider.G.add_node(item['user_name'])
+            if item['follow_name'] not in spider.G.nodes:
+                spider.G.add_node(item['follow_name'])
+            spider.G.add_edge(item['user_name'], item['follow_name'])
+        elif item['type'] == 'followed':
+            if item['user_name'] not in spider.G.nodes:
+                spider.G.add_node(item['user_name'])
+            if item['followed_name'] not in spider.G.nodes:
+                spider.G.add_node(item['followed_name'])
+            spider.G.add_edge(item['followed_name'], item['user_name'])
 
-        has_path_ab = nx.has_path(G, node_a, node_b)
-        has_path_ba = nx.has_path(G, node_b, node_a)
+        # print(spider.G.nodes)
+        try:
+            has_path_ab = nx.has_path(spider.G, users_list[0], users_list[1])
+            has_path_ba = nx.has_path(spider.G, users_list[1], users_list[0])
+        except nx.exception.NodeNotFound:
+            pass
 
-        if has_path_ab and has_path_ba:
-            shortest_path = nx.shortest_path(G, node_a, node_b)
+        # if has_path_ab:
+        #     pass
+        # elif has_path_ba:
+        #     pass
 
-            for i, user_id in enumerate(shortest_path):
-                user_name = collection.find_one({'user_id': user_id})['user_name']
-                print(f'{i + 1}. id: {user_id}, name: {user_name}')
+        if not has_path_ab or not has_path_ba:
+            pass
+        else:
+            shortest_path_ab = nx.shortest_path(spider.G, users_list[0], users_list[1])
+            shortest_path_ba = nx.shortest_path(spider.G, users_list[1], users_list[0])
+            shortest_path_ba.reverse()
+            # print(1)
+            # if shortest_path_ab == shortest_path_ba.reverse():
+            if functools.reduce(lambda x, y: x and y, map(lambda p, q: p == q, shortest_path_ab, shortest_path_ba), True):
+                for i, user_name in enumerate(shortest_path_ab):
+                    print(f'{i + 1}. User name: {user_name}')
 
         return item
 

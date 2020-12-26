@@ -4,6 +4,7 @@ import scrapy
 from scrapy.exceptions import CloseSpider
 from ..items import InstagramFollow, InstagramFollowed, InstagramUsers
 from pymongo import MongoClient
+import networkx as nx
 
 
 class InstagramSpider(scrapy.Spider):
@@ -31,6 +32,7 @@ class InstagramSpider(scrapy.Spider):
         self.users_list = users_list
         super(InstagramSpider, self).__init__(*args, **kwargs)
         self.db = MongoClient()['parse_gb']
+        self.G = nx.DiGraph()
 
     def parse(self, response, **kwargs):
         try:
@@ -96,12 +98,12 @@ class InstagramSpider(scrapy.Spider):
                 follow_name=follow_user['node']['username'],
                 type='follow'
             )
-            yield InstagramUsers(
-                user_id=follow_user['node']['id'],
-                user_name=follow_user['node']['username'],
-                type='user'
-            )
-            yield response.follow(f'/{follow_user["node"]["username"]}', callback=self.user_parse)
+            # yield InstagramUsers(
+            #     user_id=follow_user['node']['id'],
+            #     user_name=follow_user['node']['username'],
+            #     type='user'
+            # )
+            # yield response.follow(f'/{follow_user["node"]["username"]}', callback=self.user_parse)
 
     def get_followed_api_request(self, response, user_data, variables=None):
         if not variables:
@@ -139,12 +141,12 @@ class InstagramSpider(scrapy.Spider):
                 followed_name=followed_user['node']['username'],
                 type='followed'
             )
-            yield InstagramUsers(
-                user_id=followed_user['node']['id'],
-                user_name=followed_user['node']['username'],
-                type='user'
-            )
-            yield response.follow(f'/{followed_user["node"]["username"]}', callback=self.user_parse)
+            # yield InstagramUsers(
+            #     user_id=followed_user['node']['id'],
+            #     user_name=followed_user['node']['username'],
+            #     type='user'
+            # )
+            # yield response.follow(f'/{followed_user["node"]["username"]}', callback=self.user_parse)
 
     def sending_request(self, response):
         for name in self.mutual_names:
