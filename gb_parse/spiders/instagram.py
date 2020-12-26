@@ -33,8 +33,11 @@ class InstagramSpider(scrapy.Spider):
         super(InstagramSpider, self).__init__(*args, **kwargs)
         self.db = MongoClient()['parse_gb']
         self.G = nx.DiGraph()
+        # self.shortest_path = None
 
     def parse(self, response, **kwargs):
+        # if self.close_down:
+        #     raise CloseSpider(reason="Handshake's chain is found")
         try:
             js_data = self.js_data_extract(response)
             yield scrapy.FormRequest(
@@ -53,8 +56,8 @@ class InstagramSpider(scrapy.Spider):
                     yield response.follow(f'/{user}', callback=self.user_parse)
                 self.sending_request(response)
 
-        if self.close_down:
-            raise CloseSpider(reason="Handshake's chain is found")
+                # if self.close_down:
+                #     raise CloseSpider(reason="Handshake's chain is found")
 
     def user_parse(self, response):
         data = self.js_data_extract(response)
