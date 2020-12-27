@@ -54,7 +54,7 @@ class InstagramSpider(scrapy.Spider):
             if response.json().get('authenticated'):
                 for user in self.users_list:
                     yield response.follow(f'/{user}', callback=self.user_parse)
-                self.sending_request(response)
+                # self.sending_request(response)
 
                 # if self.close_down:
                 #     raise CloseSpider(reason="Handshake's chain is found")
@@ -106,6 +106,7 @@ class InstagramSpider(scrapy.Spider):
             #     user_name=follow_user['node']['username'],
             #     type='user'
             # )
+            yield from self.sending_request(response, follow_user['node']['username'])
             # yield response.follow(f'/{follow_user["node"]["username"]}', callback=self.user_parse)
 
     def get_followed_api_request(self, response, user_data, variables=None):
@@ -149,11 +150,11 @@ class InstagramSpider(scrapy.Spider):
             #     user_name=followed_user['node']['username'],
             #     type='user'
             # )
+            yield from self.sending_request(response, followed_user['node']['username'])
             # yield response.follow(f'/{followed_user["node"]["username"]}', callback=self.user_parse)
 
-    def sending_request(self, response):
-        for name in self.mutual_names:
-            response.follow(f'/{name}', callback=self.user_parse)
+    def sending_request(self, response, user_name):
+        yield response.follow(f'/{user_name}', callback=self.user_parse)
 
     @staticmethod
     def js_data_extract(response):
