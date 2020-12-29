@@ -47,7 +47,6 @@ class InstagramItem(scrapy.Item):
     _id = scrapy.Field()
     date_parse = scrapy.Field()
     data = scrapy.Field()
-    # type = scrapy.Field()
 
 
 class InstagramTag(InstagramItem):

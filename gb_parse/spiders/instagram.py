@@ -1,8 +1,7 @@
 
 import json
 import scrapy
-from scrapy.exceptions import CloseSpider
-from ..items import InstagramFollow, InstagramFollowed, InstagramUsers
+from ..items import InstagramFollow, InstagramFollowed, InstagramChain
 from pymongo import MongoClient
 import networkx as nx
 
@@ -33,11 +32,8 @@ class InstagramSpider(scrapy.Spider):
         super(InstagramSpider, self).__init__(*args, **kwargs)
         self.db = MongoClient()['parse_gb']
         self.G = nx.DiGraph()
-        # self.shortest_path = None
 
     def parse(self, response, **kwargs):
-        # if self.close_down:
-        #     raise CloseSpider(reason="Handshake's chain is found")
         try:
             js_data = self.js_data_extract(response)
             yield scrapy.FormRequest(
@@ -54,10 +50,6 @@ class InstagramSpider(scrapy.Spider):
             if response.json().get('authenticated'):
                 for user in self.users_list:
                     yield response.follow(f'/{user}', callback=self.user_parse)
-                # self.sending_request(response)
-
-                # if self.close_down:
-                #     raise CloseSpider(reason="Handshake's chain is found")
 
     def user_parse(self, response):
         data = self.js_data_extract(response)
@@ -101,13 +93,8 @@ class InstagramSpider(scrapy.Spider):
                 follow_name=follow_user['node']['username'],
                 type='follow'
             )
-            # yield InstagramUsers(
-            #     user_id=follow_user['node']['id'],
-            #     user_name=follow_user['node']['username'],
-            #     type='user'
-            # )
-            yield from self.sending_request(response, follow_user['node']['username'])
-            # yield response.follow(f'/{follow_user["node"]["username"]}', callback=self.user_parse)
+
+            yield response.follow(f'/{follow_user["node"]["username"]}', callback=self.user_parse)
 
     def get_followed_api_request(self, response, user_data, variables=None):
         if not variables:
@@ -145,16 +132,15 @@ class InstagramSpider(scrapy.Spider):
                 followed_name=followed_user['node']['username'],
                 type='followed'
             )
-            # yield InstagramUsers(
-            #     user_id=followed_user['node']['id'],
-            #     user_name=followed_user['node']['username'],
-            #     type='user'
-            # )
-            yield from self.sending_request(response, followed_user['node']['username'])
-            # yield response.follow(f'/{followed_user["node"]["username"]}', callback=self.user_parse)
 
-    def sending_request(self, response, user_name):
-        yield response.follow(f'/{user_name}', callback=self.user_parse)
+    @staticmethod
+    def save_result(user_name_start, user_name_target, shortest_path):
+        yield InstagramChain(
+                start_user_name=user_name_start,
+                target_user_name=user_name_target,
+                handshakes_chain=shortest_path,
+                type='chain'
+        )
 
     @staticmethod
     def js_data_extract(response):
